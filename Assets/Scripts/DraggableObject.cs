@@ -22,6 +22,7 @@ public class DraggableObject : MonoBehaviour
         {
             Debug.LogError("Rigidbody component is required for realistic physics.");
         }
+        PlatformManager.Instance.RegisterObject(this);
     }
 
     private void OnMouseDown()
@@ -85,5 +86,11 @@ public class DraggableObject : MonoBehaviour
         clampedPosition.y = Mathf.Clamp(clampedPosition.y, minBounds.y, maxBounds.y);
         clampedPosition.z = Mathf.Clamp(clampedPosition.z, minBounds.z, maxBounds.z);
         transform.position = clampedPosition;
+    }
+
+        public void DestroyObject()
+    {
+        PlatformManager.Instance.RemoveObject(this); // PlatformManager'dan kaldır
+        Destroy(gameObject); // Nesneyi yok et
     }
 }

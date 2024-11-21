@@ -42,4 +42,8 @@ public class UIManager : MonoBehaviour
 
         timerText.text = string.Format("Time: {0:00}:{1:00}", minutes, seconds);
     }
+    public int GetScore()
+    {
+        return score; // Mevcut skoru döndür
+    }
 }
