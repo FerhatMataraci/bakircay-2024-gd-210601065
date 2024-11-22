@@ -9,70 +9,65 @@ public class Platform : MonoBehaviour
     public float forceMagnitude = 1;
 
     private List<DraggableObject> activeObjects = new List<DraggableObject>();
-    private bool isProcessing = false; // Platform işleme yapıyorsa yeni tetiklemeleri engeller
+    private bool isProcessing = false;
 
-    public Vector3 firstObjectPositionOffset = new Vector3(-1.5f, 0f, 0f); // İlk objenin pozisyonu
-    public Vector3 secondObjectPositionOffset = new Vector3(1.5f, 0f, 0f); // İkinci objenin pozisyonu
-    public Vector3 ejectPositionOffset = new Vector3(0f, 3f, 0f); // Fazla objenin ışınlanacağı uzak pozisyon
+    public Vector3 firstObjectPositionOffset = new Vector3(-1.5f, 0f, 0f); 
+    public Vector3 secondObjectPositionOffset = new Vector3(1.5f, 0f, 0f);
+    public Vector3 ejectPositionOffset = new Vector3(0f, 3f, 0f); 
 
     private void OnTriggerEnter(Collider other)
     {
-        // Eğer platform işleme yapıyorsa yeni nesneleri kabul etme
-        if (isProcessing) return;
+        var obj = other.GetComponent<DraggableObject>();
 
-        // DraggableObject türünde mi kontrol et
-        var draggable = other.GetComponent<DraggableObject>();
-        if (draggable != null && !activeObjects.Contains(draggable))
+        if (obj == null || activeObjects.Contains(obj)) return;
+
+        if (isProcessing || (firstObject != null && secondObject != null))
         {
-            activeObjects.Add(draggable); // Yeni nesneyi listeye ekle
+            EjectExtraObject(obj); 
+            return;
+        }
 
-            // İlk ve ikinci nesneleri belirle
-            if (firstObject == null)
-            {
-                firstObject = draggable;
-                draggable.LockMovement();
-                PositionObject(draggable, transform.position + firstObjectPositionOffset); // İlk pozisyona yerleştir
-            }
-            else if (secondObject == null)
-            {
-                secondObject = draggable;
-                draggable.LockMovement();
-                PositionObject(draggable, transform.position + secondObjectPositionOffset); // İkinci pozisyona yerleştir
+        activeObjects.Add(obj); 
 
-                // İki nesne tamamlandığında işlem başlat
-                StartCoroutine(ProcessObjects());
-            }
-            else
-            {
-                // Üçüncü nesne platforma girmeye çalışırsa onu platformdan uzağa ışınla
-                EjectExtraObject(draggable);
-            }
+        if (firstObject == null)
+        {
+            firstObject = obj;
+            obj.LockMovement();
+            PositionObject(obj, transform.position + firstObjectPositionOffset);
+        }
+        else if (secondObject == null)
+        {
+            secondObject = obj;
+            obj.LockMovement();
+            PositionObject(obj, transform.position + secondObjectPositionOffset);
+
+            StartCoroutine(ProcessObjects()); 
         }
     }
 
     private void PositionObject(DraggableObject obj, Vector3 position)
-    {
-        obj.transform.position = position; // Nesneyi belirtilen pozisyona taşı
+    {   
+        Debug.Log($"Placing {obj.name} at {position}. Current Platform Position: {transform.position}");
+        obj.transform.position = position; 
     }
 
     private void EjectExtraObject(DraggableObject extraObject)
     {
-        Vector3 ejectPosition = transform.position + ejectPositionOffset; // Platformdan uzağa bir pozisyon belirle
-        extraObject.transform.position = ejectPosition; // Nesneyi ışınla
+        Vector3 ejectPosition = transform.position + ejectPositionOffset;
+        extraObject.transform.position = ejectPosition; 
         Rigidbody rb = extraObject.GetComponent<Rigidbody>();
         if (rb != null)
         {
             rb.isKinematic = false;
-            rb.AddForce(Vector3.up * forceMagnitude, ForceMode.Impulse); // Yukarıya doğru hafif kuvvet uygula
+            rb.AddForce(Vector3.up * forceMagnitude, ForceMode.Impulse); 
         }
+        Debug.Log($"Ejecting {extraObject.name} to position: {ejectPosition}");
     }
 
     private IEnumerator ProcessObjects()
     {
-        if (isProcessing) yield break; // Platform zaten işleme yapıyorsa çık
-        isProcessing = true;
-
-        yield return new WaitForSeconds(0.5f); // İşlem öncesi gecikme
+        isProcessing = true; 
+        yield return new WaitForSeconds(0.5f);
 
         if (firstObject != null && secondObject != null)
         {
@@ -86,46 +81,44 @@ public class Platform : MonoBehaviour
             }
         }
 
-        ResetPlatform();
-        isProcessing = false;
+        ResetPlatform(); 
+        isProcessing = false; 
     }
 
     private IEnumerator DestroyMatchedObjects()
     {
        float duration = 1f;
-    Vector3 moveOffset = new Vector3(0, 3f, 0); // Yukarı doğru hareket miktarı
+       Vector3 moveOffset = new Vector3(0, 3f, 0); 
 
-    // Hedef pozisyonlar
-    Vector3 firstTarget = firstObject.transform.position + moveOffset;
-    Vector3 secondTarget = secondObject.transform.position + moveOffset;
+       Vector3 firstTarget = firstObject.transform.position + moveOffset;
+       Vector3 secondTarget = secondObject.transform.position + moveOffset;
 
-    float elapsed = 0f;
+       float elapsed = 0f;
 
-    // Yukarı hareketin gerçekleştirildiği döngü
-    while (elapsed < duration)
-    {
-        elapsed += Time.deltaTime;
-        float t = elapsed / duration;
+       while (elapsed < duration)
+       {
+           elapsed += Time.deltaTime;
+           float t = elapsed / duration;
 
-        if (firstObject != null)
-            firstObject.transform.position = Vector3.Lerp(firstObject.transform.position, firstTarget, t);
+           if (firstObject != null)
+               firstObject.transform.position = Vector3.Lerp(firstObject.transform.position, firstTarget, t);
 
-        if (secondObject != null)
-            secondObject.transform.position = Vector3.Lerp(secondObject.transform.position, secondTarget, t);
-    
-        yield return null; // Bir sonraki kareye geç
-    }
-    UIManager.Instance.AddScore(10);
-    // Nesneleri yok etme
-    if (firstObject != null)
-    {
-        firstObject.DestroyObject(); // DraggableObject sınıfını kullanarak yok et
-    }
+           if (secondObject != null)
+               secondObject.transform.position = Vector3.Lerp(secondObject.transform.position, secondTarget, t);
+       
+           yield return null; 
+       }
 
-    if (secondObject != null)
-    {
-        secondObject.DestroyObject(); // DraggableObject sınıfını kullanarak yok et
-    }
+       UIManager.Instance.AddScore(10);
+       if (firstObject != null)
+       {
+           firstObject.DestroyObject(); 
+       }
+
+       if (secondObject != null)
+       {
+           secondObject.DestroyObject(); 
+       }
     }
 
     private IEnumerator EjectObjects()
@@ -137,8 +130,8 @@ public class Platform : MonoBehaviour
             Rigidbody rb = firstObject.GetComponent<Rigidbody>();
             if (rb != null)
             {
-                rb.isKinematic = false; // Fiziksel hareketi etkinleştir
-                rb.AddForce(ejectDirection * forceMagnitude, ForceMode.Impulse); // Kuvvet uygula
+                firstObject.UnlockMovement(); 
+                rb.AddForce(-ejectDirection * forceMagnitude, ForceMode.Impulse);
             }
         }
 
@@ -147,11 +140,10 @@ public class Platform : MonoBehaviour
             Rigidbody rb = secondObject.GetComponent<Rigidbody>();
             if (rb != null)
             {
-                rb.isKinematic = false; // Fiziksel hareketi etkinleştir
-                rb.AddForce(-ejectDirection * forceMagnitude, ForceMode.Impulse); // Zıt yöne kuvvet uygula
+                secondObject.UnlockMovement();
+                rb.AddForce(ejectDirection * forceMagnitude, ForceMode.Impulse); 
             }
         }
-
         yield return new WaitForSeconds(1f);
     }
 

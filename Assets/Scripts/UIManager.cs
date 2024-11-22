@@ -44,6 +44,6 @@ public class UIManager : MonoBehaviour
     }
     public int GetScore()
     {
-        return score; // Mevcut skoru döndür
+        return score; 
     }
 }
