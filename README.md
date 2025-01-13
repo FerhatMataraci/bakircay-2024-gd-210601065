@@ -1,3 +1,5 @@
+ferhatmataraci.github.io/bakircay-2024
+
 MIDTERM
 
 Objective
