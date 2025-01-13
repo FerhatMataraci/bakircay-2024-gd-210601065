@@ -50,6 +50,9 @@ namespace Match.View
             ValidateReferences();
             InitializeComponents();
             SetupButtonListeners();
+            
+            // Event'e abone ol
+            GameEvents.OnItemsSpawned += OnItemsSpawned;
         }
 
         private void ValidateReferences()
@@ -138,6 +141,7 @@ namespace Match.View
         {
             // Event aboneliklerini temizle
             GameEvents.OnItemMatched -= OnItemMatched;
+            GameEvents.OnItemsSpawned -= OnItemsSpawned;
             GameEvents.OnItemsSpawned -= SetupUI;
 
             // Button listener'lar� temizle
@@ -404,6 +408,16 @@ namespace Match.View
                 }
             }
 
+            // Skor ve slider'ı sıfırla
+            _score = 0;
+             if (scoreText != null)
+                scoreText.text = string.Format(_scoreTextFormat, _score);
+            if (progressSlider != null)
+            {
+                progressSlider.value = 0;
+            }
+            UpdateUI();
+
             // Yeni itemları spawn et
             StartCoroutine(SpawnWithDelay());
         }
@@ -418,5 +432,18 @@ namespace Match.View
         }
 
         #endregion
+
+        private void OnItemsSpawned()
+        {
+            // Yeni objeler spawn edildiğinde skor ve slider'ı sıfırla
+            _score = 0;
+             if (scoreText != null)
+                scoreText.text = string.Format(_scoreTextFormat, _score);
+            UpdateUI();
+            if (progressSlider != null)
+            {
+                progressSlider.value = 0;
+            }
+        }
     }
 }
